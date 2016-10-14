@@ -1,0 +1,17 @@
+os:
+  - linux
+language: python
+python:
+  - '2.7'
+  - '3.4'
+install:
+  - pip install -r ./requirements/ci.txt
+  - pip install --upgrade --editable .
+script:
+  - py.test --verbose ./il2fb/regiments ./tests --cov ./il2fb/regiments ./tests
+after_success:
+  - codecov
+notifications:
+  email: false
+  slack:
+    secure: W2G0CJ/YSAQsuVfSw3yNgdy/pRDxaiqKxm0dH8trbdVNfntuAUhDn07Nhk3f8zW9Sp+nS8OKWI8dnYqZU0tQdbWCI6SQI492nNUiEQLwCm43Dm41Ss7f1fYXdNPNKOc7rbM1s9qLDFF8ckQgMhgCjqE/gxwCm+PpBZ0je0jKdnZxrFiePoK/P3KpdRapKMPPka8OCMUKtFWGJQm5QS6Xt2FPpPjkrKKh3SUhNLuRr/aUHXCevq5SFHs/CTQ4QNVPOAr96eZvvRHD+Yg25l6QBOXBpvOpV4eL22o5DETUZI9eoM6QdsDGq/yN/qF8KVlcnF6R0wpZVF6AplWtVMZmSY3vQt3g5PzvYM5HZr1gxdyISDLjwsxC6ee7d/hdTX1P+AZlviFT1NJAXo/DUpNZbTwkHJqbPJrUs9jWf59dDMeySikk/qzg7RMFkNBqgmG+sX0yYHxQ1Wc1SXxI8iaJnlJE0X1INfOqxP7YSob904LTP5PdU0TZZmvTsv6SFPzpqZlsYeb16htN0wTxrA099wXumM68qBh+BvPHsy5cWC0+Jqx11d0JMOJudcjBtxtFoUub+BBaYfjDh5bDgmxR99jZGB8jcEtuVbC/+R12mi/tvogpJ5qgiXgpvlEOYp3UcQhJQBEc2hxVKezwD1jFezbZaG0rh6VdIf8sj9diWEE=
