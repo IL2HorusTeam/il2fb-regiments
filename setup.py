@@ -26,7 +26,7 @@ def split_requirements(lines):
     return requirements, dependencies
 
 
-with open(os.path.join(__here__, 'requirements', 'dist.txt'), encoding="utf8") as f:
+with open(os.path.join(__here__, 'requirements', 'dist.txt')) as f:
     REQUIREMENTS = [x.strip() for x in f]
     REQUIREMENTS = [x for x in REQUIREMENTS if x and not x.startswith('#')]
     REQUIREMENTS, DEPENDENCIES = split_requirements(REQUIREMENTS)
@@ -37,7 +37,7 @@ README = open(os.path.join(__here__, 'README.rst'), encoding="utf8").read()
 
 setup(
     name='il2fb-regiments',
-    version='1.0.0',
+    version='1.0.1',
     description="Access regiments of IL-2 Forgotten Battles flight simulator.",
     long_description=README,
     keywords=[

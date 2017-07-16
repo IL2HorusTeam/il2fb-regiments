@@ -137,13 +137,6 @@ class RegimentTestCase(unittest.TestCase):
         self.assertEqual(country.pop('verbose_name'), "United States")
         self.assertIsNone(country.pop('help_text'))
 
-        belligerent = country.pop('belligerent')
-        self.assertEqual(belligerent.pop('name'), "red")
-        self.assertEqual(belligerent.pop('verbose_name'), "allies")
-        self.assertIsNone(belligerent.pop('help_text'))
-        self.assertEqual(belligerent.pop('value'), 1)
-
-        self.assertFalse(belligerent)
         self.assertFalse(country)
         self.assertFalse(air_force)
         self.assertFalse(primitive)
