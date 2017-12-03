@@ -1,7 +1,7 @@
 IL-2 FB Regiments
 =================
 
-|pypi_package| |pypi_downloads| |python_versions| |license|
+|pypi_package| |python_versions| |license|
 
 |unix_build| |windows_build| |coverage_status|
 
@@ -91,10 +91,6 @@ Human-readable messages are sensitive to current language:
 .. |pypi_package| image:: http://img.shields.io/pypi/v/il2fb-regiments.svg?style=flat
    :target: http://badge.fury.io/py/il2fb-regiments/
    :alt: Version of PyPI package
-
-.. |pypi_downloads| image::  http://img.shields.io/pypi/dm/il2fb-regiments.svg?style=flat
-   :target: https://crate.io/packages/il2fb-regiments/
-   :alt: Number of downloads of PyPI package
 
 .. |python_versions| image:: https://img.shields.io/badge/Python-2.7,3.4,3.5,3.6-brightgreen.svg?style=flat
    :alt: Supported versions of Python
