@@ -1,6 +1,10 @@
 IL-2 FB Regiments
 =================
 
+.. image:: https://api.codacy.com/project/badge/Grade/01318552427444f79d7e336cd747bd17
+   :alt: Codacy Badge
+   :target: https://app.codacy.com/gh/IL2HorusTeam/il2fb-regiments?utm_source=github.com&utm_medium=referral&utm_content=IL2HorusTeam/il2fb-regiments&utm_campaign=Badge_Grade
+
 |pypi_package| |python_versions| |license|
 
 |unix_build| |windows_build| |coverage_status|
