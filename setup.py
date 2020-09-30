@@ -1,74 +1,145 @@
-# coding: utf-8
-
+import itertools
 import os
-import sys
+import shlex
 
+from pathlib import Path
 from setuptools import setup
+from subprocess import check_output
 
-if sys.version_info[0] < 3:
-    from io import open
+from typing import List
+from typing import Optional
+from typing import Text
+from typing import Tuple
 
 
-__here__ = os.path.abspath(os.path.dirname(__file__))
+__here__ = Path(__file__).absolute().parent
 
 
-def split_requirements(lines):
-    requirements, dependencies = [], []
+version_file_path = __here__ / "il2fb" / "regiments" / "version.py"
+exec(compile(version_file_path.read_text(), version_file_path, "exec"))
 
-    for line in lines:
-        if line.startswith('-e'):
-            line = line.split(' ', 1)[1]
-            dependencies.append(line)
-            line = line.split('#egg=', 1)[1]
 
+def maybe_get_shell_output(command: Text) -> Text:
+  try:
+    args = shlex.split(command)
+    with open(os.devnull, "w") as devnull:
+      return check_output(args, stderr=devnull).strip().decode()
+  except Exception:
+    pass
+
+
+def maybe_get_current_branch_name() -> Optional[Text]:
+  return maybe_get_shell_output("git rev-parse --abbrev-ref HEAD")
+
+
+def maybe_get_current_commit_hash() -> Optional[Text]:
+  return maybe_get_shell_output("git rev-parse --short HEAD")
+
+
+def parse_requirements(file_path: Path) -> Tuple[List[Text], List[Text]]:
+  requirements, dependencies = list(), list()
+
+  with file_path.open("rt") as f:
+    for line in f:
+      line = line.strip()
+
+      if not line or line.startswith("#"):
+        continue
+
+      if line.startswith("-e"):
+        line = line.split(" ", 1)[1]
+        dependencies.append(line)
+        line = line.split("#egg=", 1)[1]
+        requirements.append(line)
+      elif line.startswith("-r"):
+        name = Path(line.split(" ", 1)[1])
+        path = file_path.parent / name
+        subrequirements, subdependencies = parse_requirements(path)
+        requirements.extend(subrequirements)
+        dependencies.extend(subdependencies)
+      else:
         requirements.append(line)
 
-    return requirements, dependencies
+  return requirements, dependencies
 
 
-with open(os.path.join(__here__, 'requirements', 'dist.txt')) as f:
-    REQUIREMENTS = [x.strip() for x in f]
-    REQUIREMENTS = [x for x in REQUIREMENTS if x and not x.startswith('#')]
-    REQUIREMENTS, DEPENDENCIES = split_requirements(REQUIREMENTS)
+README    = (__here__ / "README.rst"   ).read_text()
+CHANGELOG = (__here__ / "CHANGELOG.rst").read_text()
 
+STABLE_BRANCH_NAME  = "master"
+CURRENT_COMMIT_HASH = maybe_get_current_commit_hash()
+CURRENT_BRANCH_NAME = maybe_get_current_branch_name()
+IS_CURRENT_BRANCH_STABLE = (CURRENT_BRANCH_NAME == STABLE_BRANCH_NAME)
+BUILD_TAG = (
+  f".{CURRENT_BRANCH_NAME}.{CURRENT_COMMIT_HASH}"
+  if not IS_CURRENT_BRANCH_STABLE and CURRENT_COMMIT_HASH
+  else ""
+)
 
-README = open(os.path.join(__here__, 'README.rst'), encoding="utf8").read()
+REQUIREMENTS_DIR_PATH = __here__ / "requirements"
+
+INSTALL_REQUIREMENTS, INSTALL_DEPENDENCIES = parse_requirements(
+  file_path=(REQUIREMENTS_DIR_PATH / "dist.txt"),
+)
+TEST_REQUIREMENTS, TEST_DEPENDENCIES = parse_requirements(
+  file_path=(REQUIREMENTS_DIR_PATH / "test.txt"),
+)
 
 
 setup(
-    name='il2fb-regiments',
-    version='1.0.1',
-    description="Access regiments of IL-2 Forgotten Battles flight simulator.",
-    long_description=README,
-    keywords=[
-        'il2', 'il-2', 'fb', 'forgotten battles', 'regiments',
-    ],
-    license='LGPLv3',
-    url='https://github.com/IL2HorusTeam/il2fb-regiments',
-    author='Alexander Oblovatniy',
-    author_email='oblovatniy@gmail.com',
-    packages=[
-        'il2fb.regiments',
-    ],
-    namespace_packages=[
-        'il2fb',
-    ],
-    include_package_data=True,
-    install_requires=REQUIREMENTS,
-    dependency_links=DEPENDENCIES,
-    classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
-        'Natural Language :: English',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Topic :: Software Development :: Libraries',
-    ],
-    platforms=[
-        'any',
-    ],
+  name="il2fb-regiments",
+  version=VERSION,
+  description=(
+    "Access data about regiments from «IL-2 Sturmovik: Forgotten Battles» "
+    "flight simulator"
+  ),
+  long_description=README + "\n\n" + CHANGELOG,
+  long_description_content_type="text/x-rst",
+  keywords=[
+    "il2", "il-2", "fb", "forgotten battles", "regiments",
+  ],
+  license="MIT",
+  url=f"https://github.com/IL2HorusTeam/il2fb-regiments/tree/v{VERSION}",
+
+  author="Oleksandr Oblovatnyi",
+  author_email="oblovatniy@gmail.com",
+
+  packages=[
+    "il2fb.regiments",
+  ],
+  namespace_packages=[
+    "il2fb",
+  ],
+  include_package_data=True,
+
+  python_requires=">=3.7",
+  dependency_links=list(set(itertools.chain(
+    INSTALL_DEPENDENCIES,
+    TEST_DEPENDENCIES,
+  ))),
+  install_requires=INSTALL_REQUIREMENTS,
+  tests_require=TEST_REQUIREMENTS,
+  test_suite="tests",
+
+  classifiers=[
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Software Development :: Libraries",
+  ],
+
+  options={
+    'egg_info': {
+      'tag_build': BUILD_TAG,
+      'tag_date':  False,
+    },
+  },
+
+  zip_safe=False,
 )
