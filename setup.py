@@ -21,7 +21,7 @@ __here__ = Path(__file__).absolute().parent
 
 
 version_file_path = __here__ / "il2fb" / "regiments" / "version.py"
-exec(compile(version_file_path.read_text(), version_file_path, "exec"))
+exec(compile(version_file_path.read_text(encoding="utf-8"), version_file_path, "exec"))
 
 
 def maybe_get_shell_output(command: str) -> str:
@@ -44,7 +44,7 @@ def maybe_get_current_commit_hash() -> Optional[str]:
 def parse_requirements(file_path: Path) -> Tuple[List[str], List[str]]:
   requirements, dependencies = list(), list()
 
-  with file_path.open("rt") as f:
+  with file_path.open("rt", encoding="utf-8") as f:
     for line in f:
       line = line.strip()
 
@@ -70,8 +70,8 @@ def parse_requirements(file_path: Path) -> Tuple[List[str], List[str]]:
   return requirements, dependencies
 
 
-README    = (__here__ / "README.rst"   ).read_text()
-CHANGELOG = (__here__ / "CHANGELOG.rst").read_text()
+README    = (__here__ / "README.rst"   ).read_text(encoding="utf-8")
+CHANGELOG = (__here__ / "CHANGELOG.rst").read_text(encoding="utf-8")
 
 STABLE_BRANCH_NAME  = "master"
 CURRENT_COMMIT_HASH = maybe_get_current_commit_hash()
