@@ -76,7 +76,7 @@ The set of supported languages is defined by ``il2fb-commons`` library.
 
 .. code-block:: python
 
-  from verboselib import use_language
+  from verboselib import set_language
   from il2fb.regiments import Regiments
 
   regiments = Regiments()
@@ -89,7 +89,7 @@ The set of supported languages is defined by ``il2fb-commons`` library.
   print(regiment.help_text)
   # 890th "Bryansk" AP DD
 
-  use_language("ru")
+  set_language("ru")
 
   print(regiment.verbose_name)
   # 890-й Брянский АП ДД
@@ -115,7 +115,7 @@ This can be done via ``to_primitive()`` method:
 
   regiment = regiments.get_by_code_name("USN_VT_9B")
 
-  print(json.dumps(self.to_primitive(), indent=2))
+  print(json.dumps(regiment.to_primitive(), indent=2))
 
 
 Outputs:
@@ -124,12 +124,12 @@ Outputs:
 
   {
     "air_force": {
-      "name": "usn",
+      "name": "USN",
       "value": "un",
       "verbose_name": "USN",
       "help_text": "United States Navy",
       "country": {
-        "name": "us",
+        "name": "US",
         "verbose_name": "United States",
         "help_text": null
       },
