@@ -23,6 +23,10 @@ from il2fb.commons.air_forces import AIR_FORCE
 
 from il2fb.commons.supported_languages import SUPPORTED_LANGUAGE
 
+from .exceptions import IL2FBRegimentAttributeError
+from .exceptions import IL2FBRegimentDataSourceNotFound
+from .exceptions import IL2FBRegimentLookupError
+
 from ._utils import export
 
 
@@ -75,12 +79,12 @@ class RegimentInfoLoader:
     file_path = self._data_dir_path / file_name
     try:
       return self._load_value_or_raise(code_name, file_path)
-    except ValueError:
+    except IL2FBRegimentLookupError:
       return self._data_missing_value
 
   def _load_value_or_raise(self, code_name: str, file_path: Path) -> str:
     if not file_path.exists():
-      raise ValueError
+      raise IL2FBRegimentDataSourceNotFound
 
     with file_path.open(mode="rb") as f:
       code_name = code_name.encode(self._data_file_encoding)
@@ -89,7 +93,7 @@ class RegimentInfoLoader:
           key, value = line.split(maxsplit=1)
           return value.decode(self._data_value_encoding).strip()
       else:
-        raise ValueError
+        raise IL2FBRegimentLookupError
 
 
 @export
@@ -113,7 +117,7 @@ class Regiment:
   def __getattr__(self, name: str) -> str:
     loader = self._text_attribute_loaders.get(name)
     if not loader:
-      raise AttributeError(
+      raise IL2FBRegimentAttributeError(
         f"'{self.__class__}' object has no attribute '{name}'"
       )
 
@@ -168,8 +172,8 @@ class Regiments:
   ):
     self._data_file_path = data_dir_path / data_file_name
     if not self._data_file_path.exists():
-      raise ValueError(
-        f"Data file '{str(self._data_file_path)}' does not exist"
+      raise IL2FBRegimentDataSourceNotFound(
+        f"data source file '{str(self._data_file_path)}' does not exist"
       )
 
     self._data_file_encoding = data_file_encoding
@@ -191,9 +195,11 @@ class Regiments:
     return regiment
 
   def _load_by_code_name_or_raise(self, code_name: str) -> Regiment:
-    flight_prefix = self._get_flight_prefix_for_existing_regiment(code_name)
+    flight_prefix = self._get_flight_prefix_for_regiment(code_name)
     if not flight_prefix:
-      raise ValueError(f"Regiment with code name '{code_name}' not found")
+      raise IL2FBRegimentLookupError(
+        f"regiment with code name '{code_name}' not found"
+      )
 
     air_force = AIR_FORCE.get_by_flight_prefix(flight_prefix)
 
@@ -203,7 +209,7 @@ class Regiments:
       info_loader=self._info_loader,
     )
 
-  def _get_flight_prefix_for_existing_regiment(self, code_name: str) -> Optional[str]:
+  def _get_flight_prefix_for_regiment(self, code_name: str) -> Optional[str]:
     with self._data_file_path.open(
       mode="rt",
       encoding=self._data_file_encoding,

@@ -161,7 +161,7 @@ class RegimentsTestCase(unittest.TestCase):
     self.assertEqual(id(regiment1), id(regiment2))
 
   def test_get_by_code_name_invalid(self):
-    self.assertRaises(ValueError, self.regiments.get_by_code_name, "foo")
+    self.assertRaises(LookupError, self.regiments.get_by_code_name, "foo")
 
   def test_filter_by_air_force(self):
     regiments = self.regiments.filter_by_air_force(AIR_FORCE.ALA)
