@@ -3,8 +3,8 @@
 build: false # Not a C# project, build stuff at the test step instead.
 environment:
   matrix:
-    - PYTHON: "C:/Python37"
-    - PYTHON: "C:/Python37-x64"
+    - PYTHON: "C:/Python38"
+    - PYTHON: "C:/Python38-x64"
 init:
   - "ECHO %PYTHON%"
   - ps: "ls C:/Python*"
@@ -14,4 +14,4 @@ install:
   - "%PYTHON%/Scripts/pip.exe install -r ./requirements/ci.txt"
   - "%PYTHON%/Scripts/pip.exe install --upgrade --editable ."
 test_script:
-  - "%PYTHON%/Scripts/py.test --doctest-modules --verbose ./il2fb/regiments ./tests --cov ./il2fb/regiments ./tests"
+  - "%PYTHON%/Scripts/py.test --exitfirst --cache-clear --doctest-modules --verbose ./il2fb/regiments ./tests --cov ./il2fb/regiments ./tests"

@@ -1,24 +1,35 @@
+import sys
+
+if sys.version_info >= (3, 9):
+  from collections.abc import Callable
+
+  Dict = dict
+  List = list
+
+else:
+  from typing import Callable
+  from typing import Dict
+  from typing import List
+
 from pathlib import Path
 
 from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Text
 
 from verboselib import get_language
 
-from il2fb.commons import SupportedLanguages
-from il2fb.commons.organization import AirForce
-from il2fb.commons.organization import AirForces
+from il2fb.commons.air_forces import AirForceConstant
+from il2fb.commons.air_forces import AIR_FORCE
+
+from il2fb.commons.supported_languages import SUPPORTED_LANGUAGE
+
+from ._utils import export
 
 
 __here__ = Path(__file__).absolute().parent
-__all__  = []
 
 
-DEFAULT_LANGUAGE_NAME = SupportedLanguages.get_default().name
+DEFAULT_LANGUAGE_NAME = SUPPORTED_LANGUAGE.get_default().name
 
 DEFAULT_DATA_DIR_PATH = __here__ / "data"
 DEFAULT_DATA_MISSING_VALUE = None
@@ -30,12 +41,7 @@ DEFAULT_CATALOG_FILE_NAME = "regiments.ini"
 DEFAULT_NAMES_FILE_NAME_FORMAT        = "regShort_{language}.properties"
 DEFAULT_DESCRIPTIONS_FILE_NAME_FORMAT = "regInfo_{language}.properties"
 
-FLIGHT_PREFIXES = set(AirForces.get_flight_prefixes())
-
-
-def export(target: Any) -> Any:
-  __all__.append(target.__name__)
-  return target
+FLIGHT_PREFIXES = set(AIR_FORCE.get_flight_prefixes())
 
 
 @export
@@ -44,11 +50,11 @@ class RegimentInfoLoader:
   def __init__(
     self,
     data_dir_path: Path=DEFAULT_DATA_DIR_PATH,
-    data_file_encoding: Text=DEFAULT_DATA_FILE_ENCODING,
-    data_value_encoding: Text=DEFAULT_VALUE_ENCODING,
-    data_missing_value: Text=DEFAULT_DATA_MISSING_VALUE,
-    names_file_name_format: Text=DEFAULT_NAMES_FILE_NAME_FORMAT,
-    descriptions_file_name_format: Text=DEFAULT_DESCRIPTIONS_FILE_NAME_FORMAT,
+    data_file_encoding: str=DEFAULT_DATA_FILE_ENCODING,
+    data_value_encoding: str=DEFAULT_VALUE_ENCODING,
+    data_missing_value: str=DEFAULT_DATA_MISSING_VALUE,
+    names_file_name_format: str=DEFAULT_NAMES_FILE_NAME_FORMAT,
+    descriptions_file_name_format: str=DEFAULT_DESCRIPTIONS_FILE_NAME_FORMAT,
   ):
     self._data_dir_path = data_dir_path
     self._data_file_encoding = data_file_encoding
@@ -57,22 +63,22 @@ class RegimentInfoLoader:
     self._names_file_name_format = names_file_name_format
     self._descriptions_file_name_format = descriptions_file_name_format
 
-  def get_name(self, code_name: Text, language: Any) -> Text:
-    file_name = self._names_file_name_format.format(language=language)
-    return self._get_value(code_name, file_name)
+  def get_name(self, code_name: str, language: Any) -> str:
+    return self._get_value(code_name, self._names_file_name_format, language)
 
-  def get_description(self, code_name: Text, language: Any) -> Text:
-    file_name = self._descriptions_file_name_format.format(language=language)
-    return self._get_value(code_name, file_name)
+  def get_description(self, code_name: str, language: Any) -> str:
+    return self._get_value(code_name, self._descriptions_file_name_format, language)
 
-  def _get_value(self, code_name: Text, file_name: Text) -> Text:
+  def _get_value(self, code_name: str, file_name_format: str, language: Any) -> str:
+    language  = language and language.lower()
+    file_name = file_name_format.format(language=language)
     file_path = self._data_dir_path / file_name
     try:
       return self._load_value_or_raise(code_name, file_path)
     except ValueError:
       return self._data_missing_value
 
-  def _load_value_or_raise(self, code_name: Text, file_path: Path) -> Text:
+  def _load_value_or_raise(self, code_name: str, file_path: Path) -> str:
     if not file_path.exists():
       raise ValueError
 
@@ -91,8 +97,8 @@ class Regiment:
 
   def __init__(
     self,
-    air_force:   AirForce,
-    code_name:   Text,
+    air_force:   AirForceConstant,
+    code_name:   str,
     info_loader: Optional[RegimentInfoLoader]=None,
   ):
     self.air_force = air_force
@@ -104,15 +110,15 @@ class Regiment:
       'help_text':    self._info_loader.get_description,
     }
 
-  def __getattr__(self, name: Text) -> Text:
+  def __getattr__(self, name: str) -> str:
     loader = self._text_attribute_loaders.get(name)
     if not loader:
       raise AttributeError(
         f"'{self.__class__}' object has no attribute '{name}'"
       )
 
-    language  = get_language()
-    if language not in SupportedLanguages:
+    language = get_language()
+    if language and language.upper() not in SUPPORTED_LANGUAGE:
       language = DEFAULT_LANGUAGE_NAME
 
     full_name = f"{name}_{language}"
@@ -127,9 +133,9 @@ class Regiment:
 
   def _load_value(
     self,
-    loader:   Callable[[Text, Any], Text],
+    loader:   Callable[[str, Any], str],
     language: Any,
-  ) -> Text:
+  ) -> str:
 
     value = loader(code_name=self.code_name, language=language)
 
@@ -138,7 +144,7 @@ class Regiment:
 
     return value
 
-  def to_primitive(self, context: Any=None) -> Dict[Text, Any]:
+  def to_primitive(self, context: Any=None) -> Dict[str, Any]:
     return {
       'air_force':    self.air_force.to_primitive(context),
       'code_name':    self.code_name,
@@ -146,7 +152,7 @@ class Regiment:
       'help_text':    self.help_text,
     }
 
-  def __repr__(self) -> Text:
+  def __repr__(self) -> str:
     return f"<{self.__class__.__name__} '{self.code_name}'>"
 
 
@@ -156,8 +162,8 @@ class Regiments:
   def __init__(
     self,
     data_dir_path:      Path=DEFAULT_DATA_DIR_PATH,
-    data_file_name:     Text=DEFAULT_CATALOG_FILE_NAME,
-    data_file_encoding: Text=DEFAULT_DATA_FILE_ENCODING,
+    data_file_name:     str=DEFAULT_CATALOG_FILE_NAME,
+    data_file_encoding: str=DEFAULT_DATA_FILE_ENCODING,
     info_loader:        RegimentInfoLoader=None,
   ):
     self._data_file_path = data_dir_path / data_file_name
@@ -175,7 +181,7 @@ class Regiments:
 
     self._cache = dict()
 
-  def get_by_code_name(self, code_name: Text) -> Regiment:
+  def get_by_code_name(self, code_name: str) -> Regiment:
     regiment = self._cache.get(code_name)
 
     if not regiment:
@@ -184,12 +190,12 @@ class Regiments:
 
     return regiment
 
-  def _load_by_code_name_or_raise(self, code_name: Text) -> Regiment:
+  def _load_by_code_name_or_raise(self, code_name: str) -> Regiment:
     flight_prefix = self._get_flight_prefix_for_existing_regiment(code_name)
     if not flight_prefix:
       raise ValueError(f"Regiment with code name '{code_name}' not found")
 
-    air_force = AirForces.get_by_flight_prefix(flight_prefix)
+    air_force = AIR_FORCE.get_by_flight_prefix(flight_prefix)
 
     return Regiment(
       air_force=air_force,
@@ -197,7 +203,7 @@ class Regiments:
       info_loader=self._info_loader,
     )
 
-  def _get_flight_prefix_for_existing_regiment(self, code_name: Text) -> Optional[Text]:
+  def _get_flight_prefix_for_existing_regiment(self, code_name: str) -> Optional[str]:
     with self._data_file_path.open(
       mode="rt",
       encoding=self._data_file_encoding,
@@ -217,7 +223,7 @@ class Regiments:
         elif line == code_name:
           return flight_prefix
 
-  def filter_by_air_force(self, air_force: AirForce) -> List[Regiment]:
+  def filter_by_air_force(self, air_force: AirForceConstant) -> List[Regiment]:
     result = []
 
     with self._data_file_path.open(

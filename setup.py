@@ -1,15 +1,20 @@
 import itertools
 import os
 import shlex
+import sys
+
+if sys.version_info >= (3, 9):
+  List  = list
+  Tuple = tuple
+else:
+  from typing import List
+  from typing import Tuple
 
 from pathlib import Path
 from setuptools import setup
 from subprocess import check_output
 
-from typing import List
 from typing import Optional
-from typing import Text
-from typing import Tuple
 
 
 __here__ = Path(__file__).absolute().parent
@@ -19,7 +24,7 @@ version_file_path = __here__ / "il2fb" / "regiments" / "version.py"
 exec(compile(version_file_path.read_text(), version_file_path, "exec"))
 
 
-def maybe_get_shell_output(command: Text) -> Text:
+def maybe_get_shell_output(command: str) -> str:
   try:
     args = shlex.split(command)
     with open(os.devnull, "w") as devnull:
@@ -28,15 +33,15 @@ def maybe_get_shell_output(command: Text) -> Text:
     pass
 
 
-def maybe_get_current_branch_name() -> Optional[Text]:
+def maybe_get_current_branch_name() -> Optional[str]:
   return maybe_get_shell_output("git rev-parse --abbrev-ref HEAD")
 
 
-def maybe_get_current_commit_hash() -> Optional[Text]:
+def maybe_get_current_commit_hash() -> Optional[str]:
   return maybe_get_shell_output("git rev-parse --short HEAD")
 
 
-def parse_requirements(file_path: Path) -> Tuple[List[Text], List[Text]]:
+def parse_requirements(file_path: Path) -> Tuple[List[str], List[str]]:
   requirements, dependencies = list(), list()
 
   with file_path.open("rt") as f:
@@ -46,17 +51,19 @@ def parse_requirements(file_path: Path) -> Tuple[List[Text], List[Text]]:
       if not line or line.startswith("#"):
         continue
 
-      if line.startswith("-e"):
-        line = line.split(" ", 1)[1]
+      if "://" in line:
         dependencies.append(line)
+
         line = line.split("#egg=", 1)[1]
         requirements.append(line)
+
       elif line.startswith("-r"):
         name = Path(line.split(" ", 1)[1])
         path = file_path.parent / name
         subrequirements, subdependencies = parse_requirements(path)
         requirements.extend(subrequirements)
         dependencies.extend(subdependencies)
+
       else:
         requirements.append(line)
 
