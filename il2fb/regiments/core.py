@@ -19,9 +19,9 @@ from typing import Optional
 from verboselib import get_language
 
 from il2fb.commons.air_forces import AirForceConstant
-from il2fb.commons.air_forces import AIR_FORCE
+from il2fb.commons.air_forces import AIR_FORCES
 
-from il2fb.commons.supported_languages import SUPPORTED_LANGUAGE
+from il2fb.commons.supported_languages import SUPPORTED_LANGUAGES
 
 from .exceptions import IL2FBRegimentAttributeError
 from .exceptions import IL2FBRegimentDataSourceNotFound
@@ -33,7 +33,7 @@ from ._utils import export
 __here__ = Path(__file__).absolute().parent
 
 
-DEFAULT_LANGUAGE_NAME = SUPPORTED_LANGUAGE.get_default().name
+DEFAULT_LANGUAGE_NAME = SUPPORTED_LANGUAGES.get_default().name
 
 DEFAULT_DATA_DIR_PATH = __here__ / "data"
 DEFAULT_DATA_MISSING_VALUE = None
@@ -45,7 +45,7 @@ DEFAULT_CATALOG_FILE_NAME = "regiments.ini"
 DEFAULT_NAMES_FILE_NAME_FORMAT        = "regShort_{language}.properties"
 DEFAULT_DESCRIPTIONS_FILE_NAME_FORMAT = "regInfo_{language}.properties"
 
-FLIGHT_PREFIXES = set(AIR_FORCE.get_flight_prefixes())
+FLIGHT_PREFIXES = set(AIR_FORCES.get_flight_prefixes())
 
 
 @export
@@ -122,7 +122,7 @@ class Regiment:
       )
 
     language = get_language()
-    if language and language.upper() not in SUPPORTED_LANGUAGE:
+    if language and language.upper() not in SUPPORTED_LANGUAGES:
       language = DEFAULT_LANGUAGE_NAME
 
     full_name = f"{name}_{language}"
@@ -201,7 +201,7 @@ class Regiments:
         f"regiment with code name '{code_name}' not found"
       )
 
-    air_force = AIR_FORCE.get_by_flight_prefix(flight_prefix)
+    air_force = AIR_FORCES.get_by_flight_prefix(flight_prefix)
 
     return Regiment(
       air_force=air_force,
