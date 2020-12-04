@@ -45,7 +45,7 @@ DEFAULT_CATALOG_FILE_NAME = "regiments.ini"
 DEFAULT_NAMES_FILE_NAME_FORMAT        = "regShort_{language}.properties"
 DEFAULT_DESCRIPTIONS_FILE_NAME_FORMAT = "regInfo_{language}.properties"
 
-FLIGHT_PREFIXES = set(AIR_FORCES.get_flight_prefixes())
+DEFAULT_REGIMENTS_IDS = frozenset(AIR_FORCES.get_default_regiment_ids())
 
 
 @export
@@ -195,13 +195,13 @@ class Regiments:
     return regiment
 
   def _load_by_code_name_or_raise(self, code_name: str) -> Regiment:
-    flight_prefix = self._get_flight_prefix_for_regiment(code_name)
-    if not flight_prefix:
+    default_regiment_id = self._get_default_regiment_id_for_regiment(code_name)
+    if not default_regiment_id:
       raise IL2FBRegimentLookupError(
         f"regiment with code name '{code_name}' not found"
       )
 
-    air_force = AIR_FORCES.get_by_flight_prefix(flight_prefix)
+    air_force = AIR_FORCES.get_by_default_regiment_id(default_regiment_id)
 
     return Regiment(
       air_force=air_force,
@@ -209,25 +209,25 @@ class Regiments:
       info_loader=self._info_loader,
     )
 
-  def _get_flight_prefix_for_regiment(self, code_name: str) -> Optional[str]:
+  def _get_default_regiment_id_for_regiment(self, code_name: str) -> Optional[str]:
     with self._data_file_path.open(
       mode="rt",
       encoding=self._data_file_encoding,
       buffering=1,
     ) as f:
 
-      flight_prefix = None
+      default_regiment_id = None
 
       for line in f:
         line = line.strip()
         if not line:
           continue
 
-        if line in FLIGHT_PREFIXES:
-          flight_prefix = line
+        if line in DEFAULT_REGIMENTS_IDS:
+          default_regiment_id = line
 
         elif line == code_name:
-          return flight_prefix
+          return default_regiment_id
 
   def filter_by_air_force(self, air_force: AirForceConstant) -> List[Regiment]:
     result = []
@@ -238,7 +238,7 @@ class Regiments:
       buffering=1,
     ) as f:
 
-      default_flight_prefix = air_force.default_flight_prefix
+      default_regiment_id = air_force.default_regiment_id
       air_force_is_found = False
 
       for line in f:
@@ -247,12 +247,12 @@ class Regiments:
         if not line:
           continue
 
-        if line == default_flight_prefix:
+        if line == default_regiment_id:
           air_force_is_found = True
 
         elif air_force_is_found:
           if (
-             line in FLIGHT_PREFIXES or
+             line in DEFAULT_REGIMENTS_IDS or
             (line.startswith('[') and line.endswith(']'))
           ):
             # Next section was found. Fullstop.

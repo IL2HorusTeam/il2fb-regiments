@@ -131,7 +131,7 @@ class RegimentTestCase(unittest.TestCase):
 
     air_force = primitive.pop("air_force")
     self.assertEqual(air_force.pop("name"), "USN")
-    self.assertEqual(air_force.pop("default_flight_prefix"), "UN_NN")
+    self.assertEqual(air_force.pop("default_regiment_id"), "UN_NN")
     self.assertEqual(air_force.pop("value"), "un")
     self.assertEqual(air_force.pop("verbose_name"), "USN")
     self.assertEqual(air_force.pop("help_text"), "United States Navy")
