@@ -16,13 +16,13 @@ class RegimentTestCase(unittest.TestCase):
     drop_language()
 
   def test_create_regiment(self):
-    testee = Regiment(AIR_FORCES.VVS_RKKA, "foo")
+    testee = Regiment(id="foo", air_force=AIR_FORCES.VVS_RKKA)
 
     self.assertEqual(testee.air_force, AIR_FORCES.VVS_RKKA)
-    self.assertEqual(testee.code_name, "foo")
+    self.assertEqual(testee.id, "foo")
 
   def test_unknown_verbose_name(self):
-    testee = Regiment(AIR_FORCES.VVS_RKKA, "foo")
+    testee = Regiment(id="foo", air_force=AIR_FORCES.VVS_RKKA)
 
     set_language("en")
     self.assertIsNone(testee.verbose_name)
@@ -34,7 +34,7 @@ class RegimentTestCase(unittest.TestCase):
     self.assertIsNone(testee.verbose_name)
 
   def test_valid_verbose_name(self):
-    testee = Regiment(AIR_FORCES.VVS_RKKA, "1st_AE_1AR")
+    testee = Regiment(id="1st_AE_1AR", air_force=AIR_FORCES.VVS_RKKA)
 
     set_language("en")
     self.assertEqual(testee.verbose_name, "OIR AE of 1st AG VVS")
@@ -46,7 +46,7 @@ class RegimentTestCase(unittest.TestCase):
     self.assertEqual(testee.verbose_name, "OIR AE of 1st AG VVS")
 
   def test_verbose_name_missing_translation(self):
-    testee = Regiment(AIR_FORCES.USN, "USN_VT_9B")
+    testee = Regiment(id="USN_VT_9B", air_force=AIR_FORCES.USN)
 
     set_language("en")
     self.assertEqual(testee.verbose_name, "VT-9 USS Essex CV-9")
@@ -58,7 +58,7 @@ class RegimentTestCase(unittest.TestCase):
     self.assertEqual(testee.verbose_name, "VT-9 USS Essex CV-9")
 
   def test_unknown_help_text(self):
-    testee = Regiment(AIR_FORCES.VVS_RKKA, "foo")
+    testee = Regiment(id="foo", air_force=AIR_FORCES.VVS_RKKA)
 
     set_language("en")
     self.assertIsNone(testee.help_text)
@@ -70,7 +70,7 @@ class RegimentTestCase(unittest.TestCase):
     self.assertIsNone(testee.help_text)
 
   def test_valid_help_text(self):
-    testee = Regiment(AIR_FORCES.VVS_RKKA, "1st_AE_1AR")
+    testee = Regiment(id="1st_AE_1AR", air_force=AIR_FORCES.VVS_RKKA)
 
     set_language("en")
     self.assertEqual(testee.help_text, "OIR AE of 1st AG VVS")
@@ -88,7 +88,7 @@ class RegimentTestCase(unittest.TestCase):
     self.assertEqual(testee.help_text, "OIR AE of 1st AG VVS")
 
   def test_help_text_missing_translation(self):
-    testee = Regiment(AIR_FORCES.USN, "USN_VT_9B")
+    testee = Regiment(id="USN_VT_9B", air_force=AIR_FORCES.USN)
 
     self.assertEqual(
       testee.help_text,
@@ -114,18 +114,18 @@ class RegimentTestCase(unittest.TestCase):
     )
 
   def test_unknown_attributes(self):
-    testee = Regiment(AIR_FORCES.USN, "USN_VT_9B")
+    testee = Regiment(id="USN_VT_9B", air_force=AIR_FORCES.USN)
     self.assertRaises(AttributeError, getattr, testee, 'abracadabra')
 
   def test_repr(self):
-    testee = Regiment(AIR_FORCES.USN, "USN_VT_9B")
+    testee = Regiment(id="USN_VT_9B", air_force=AIR_FORCES.USN)
     self.assertEqual(repr(testee), "<Regiment 'USN_VT_9B'>")
 
   def test_to_primitive(self):
-    testee = Regiment(AIR_FORCES.USN, "USN_VT_9B")
+    testee = Regiment(id="USN_VT_9B", air_force=AIR_FORCES.USN)
     primitive = testee.to_primitive()
 
-    self.assertEqual(primitive.pop("code_name"), "USN_VT_9B")
+    self.assertEqual(primitive.pop("id"), "USN_VT_9B")
     self.assertEqual(primitive.pop("verbose_name"), "VT-9 USS Essex CV-9")
     self.assertEqual(primitive.pop("help_text"), "US Navy Torpedo Squadron 9 USS Essex CV-9")
 
@@ -151,23 +151,23 @@ class RegimentsTestCase(unittest.TestCase):
   def setUp(self):
     self.regiments = Regiments()
 
-  def test_get_by_code_name(self):
-    result = self.regiments.get_by_code_name("1GvIAP")
+  def test_get_by_id(self):
+    result = self.regiments.get_by_id("1GvIAP")
     self.assertEqual(result.air_force, AIR_FORCES.VVS_RKKA)
 
-  def test_get_by_code_name_is_cached(self):
-    regiment1 = self.regiments.get_by_code_name("1GvIAP")
-    regiment2 = self.regiments.get_by_code_name("1GvIAP")
+  def test_get_by_id_is_cached(self):
+    regiment1 = self.regiments.get_by_id("1GvIAP")
+    regiment2 = self.regiments.get_by_id("1GvIAP")
     self.assertEqual(id(regiment1), id(regiment2))
 
-  def test_get_by_code_name_invalid(self):
-    self.assertRaises(LookupError, self.regiments.get_by_code_name, "foo")
+  def test_get_by_id_invalid(self):
+    self.assertRaises(LookupError, self.regiments.get_by_id, "foo")
 
   def test_filter_by_air_force(self):
     regiments = self.regiments.filter_by_air_force(AIR_FORCES.ALA)
     self.assertEqual(len(regiments), 119)
 
-    result = self.regiments.get_by_code_name("NN")
+    result = self.regiments.get_by_id("NN")
     self.assertEqual(regiments[0], result)
 
   def test_filter_by_air_force_is_cached(self):

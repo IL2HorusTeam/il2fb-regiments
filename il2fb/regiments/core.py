@@ -67,29 +67,29 @@ class RegimentInfoLoader:
     self._names_file_name_format = names_file_name_format
     self._descriptions_file_name_format = descriptions_file_name_format
 
-  def get_name(self, code_name: str, language: Any) -> str:
-    return self._get_value(code_name, self._names_file_name_format, language)
+  def get_name(self, regiment_id: str, language: Any) -> str:
+    return self._get_value(regiment_id, self._names_file_name_format, language)
 
-  def get_description(self, code_name: str, language: Any) -> str:
-    return self._get_value(code_name, self._descriptions_file_name_format, language)
+  def get_description(self, regiment_id: str, language: Any) -> str:
+    return self._get_value(regiment_id, self._descriptions_file_name_format, language)
 
-  def _get_value(self, code_name: str, file_name_format: str, language: Any) -> str:
+  def _get_value(self, regiment_id: str, file_name_format: str, language: Any) -> str:
     language  = language and language.lower()
     file_name = file_name_format.format(language=language)
     file_path = self._data_dir_path / file_name
     try:
-      return self._load_value_or_raise(code_name, file_path)
+      return self._load_value_or_raise(regiment_id, file_path)
     except IL2FBRegimentLookupError:
       return self._data_missing_value
 
-  def _load_value_or_raise(self, code_name: str, file_path: Path) -> str:
+  def _load_value_or_raise(self, regiment_id: str, file_path: Path) -> str:
     if not file_path.exists():
       raise IL2FBRegimentDataSourceNotFound
 
     with file_path.open(mode="rb") as f:
-      code_name = code_name.encode(self._data_file_encoding)
+      regiment_id = regiment_id.encode(self._data_file_encoding)
       for line in f:
-        if line.startswith(code_name):
+        if line.startswith(regiment_id):
           key, value = line.split(maxsplit=1)
           return value.decode(self._data_value_encoding).strip()
       else:
@@ -101,12 +101,12 @@ class Regiment:
 
   def __init__(
     self,
+    id:          str,
     air_force:   AirForceConstant,
-    code_name:   str,
     info_loader: Optional[RegimentInfoLoader]=None,
   ):
+    self.id        = id
     self.air_force = air_force
-    self.code_name = code_name
 
     self._info_loader = info_loader or RegimentInfoLoader()
     self._text_attribute_loaders = {
@@ -141,23 +141,23 @@ class Regiment:
     language: Any,
   ) -> str:
 
-    value = loader(code_name=self.code_name, language=language)
+    value = loader(regiment_id=self.id, language=language)
 
     if not value and language != DEFAULT_LANGUAGE_NAME:
-      value = loader(code_name=self.code_name, language=DEFAULT_LANGUAGE_NAME)
+      value = loader(regiment_id=self.id, language=DEFAULT_LANGUAGE_NAME)
 
     return value
 
   def to_primitive(self, context: Any=None) -> Dict[str, Any]:
     return {
+      'id':           self.id,
       'air_force':    self.air_force.to_primitive(context),
-      'code_name':    self.code_name,
       'verbose_name': self.verbose_name,
       'help_text':    self.help_text,
     }
 
   def __repr__(self) -> str:
-    return f"<{self.__class__.__name__} '{self.code_name}'>"
+    return f"<{self.__class__.__name__} '{self.id}'>"
 
 
 @export
@@ -185,31 +185,31 @@ class Regiments:
 
     self._cache = dict()
 
-  def get_by_code_name(self, code_name: str) -> Regiment:
-    regiment = self._cache.get(code_name)
+  def get_by_id(self, id: str) -> Regiment:
+    regiment = self._cache.get(id)
 
     if not regiment:
-      regiment = self._load_by_code_name_or_raise(code_name)
-      self._cache[code_name] = regiment
+      regiment = self._load_by_id_or_raise(id)
+      self._cache[id] = regiment
 
     return regiment
 
-  def _load_by_code_name_or_raise(self, code_name: str) -> Regiment:
-    default_regiment_id = self._get_default_regiment_id_for_regiment(code_name)
+  def _load_by_id_or_raise(self, id: str) -> Regiment:
+    default_regiment_id = self._get_default_regiment_id_for_regiment(id)
     if not default_regiment_id:
       raise IL2FBRegimentLookupError(
-        f"regiment with code name '{code_name}' not found"
+        f"regiment with id '{id}' not found"
       )
 
     air_force = AIR_FORCES.get_by_default_regiment_id(default_regiment_id)
 
     return Regiment(
+      id=id,
       air_force=air_force,
-      code_name=code_name,
       info_loader=self._info_loader,
     )
 
-  def _get_default_regiment_id_for_regiment(self, code_name: str) -> Optional[str]:
+  def _get_default_regiment_id_for_regiment(self, id: str) -> Optional[str]:
     with self._data_file_path.open(
       mode="rt",
       encoding=self._data_file_encoding,
@@ -226,7 +226,7 @@ class Regiments:
         if line in DEFAULT_REGIMENTS_IDS:
           default_regiment_id = line
 
-        elif line == code_name:
+        elif line == id:
           return default_regiment_id
 
   def filter_by_air_force(self, air_force: AirForceConstant) -> List[Regiment]:
@@ -261,8 +261,8 @@ class Regiments:
           regiment = self._cache.get(line)
           if not regiment:
             regiment = Regiment(
+              id=line,
               air_force=air_force,
-              code_name=line,
               info_loader=self._info_loader,
             )
             self._cache[line] = regiment
